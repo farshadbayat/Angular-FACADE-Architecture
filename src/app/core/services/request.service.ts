@@ -21,6 +21,7 @@ export declare type ContentType = 'application/json' | 'text/plain' | 'applicati
 export class RequestBuilder {
   private static globalRequestID = 0;
   private moduleName: ModuleName = 'BIS';
+  private apiSignature: string = environment.API_NAME;
   private version: string = 'v1';
   private controllerName: string = '';
   private actionName: string = '';
@@ -71,6 +72,8 @@ export class RequestBuilder {
 
   public setBaseURL(baseURL: string | null) {
     this.baseURL = baseURL;
+    this.version = '';
+    this.apiSignature = '';
     return this;
   }
 
@@ -198,8 +201,8 @@ export class RequestBuilder {
 
   public getUrl(): string {
     let url = this.baseURL || environment.BASE_ENDPOINT;
-    if (environment.API_NAME) {
-      url += environment.API_NAME + '/';
+    if (this.apiSignature) {
+      url += this.apiSignature + '/';
     }
     if (this.version) {
       url += this.version + '/';
