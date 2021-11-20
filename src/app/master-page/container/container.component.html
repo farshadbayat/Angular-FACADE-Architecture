@@ -1,3 +1,26 @@
-<p>container works!</p>
-<app-components></app-components>
+
+<mat-card>
+  <mat-form-field class="parameters" appearance="fill">
+    <mat-label>Total Bider</mat-label>
+    <input matInput [(ngModel)]="logic.totalBider">
+  </mat-form-field>
+  <mat-form-field class="parameters" appearance="fill">
+    <mat-label>Sale ID</mat-label>
+    <input matInput [(ngModel)]="logic.saleID">
+  </mat-form-field>
+  <button mat-raised-button color="warn" (click)="logic.fetchUserList()" >Init User</button>
+  <br>
+  <mat-progress-bar *ngIf="logic.loading$ | async" mode="indeterminate"></mat-progress-bar>
+</mat-card>
+
+<div class="container">
+  <app-clerk *ngFor="let clerk of logic.clerks$ | async" [clerk]="clerk" ></app-clerk>
+  <app-bidder *ngFor="let bidder of logic.bidders$ | async" [bidder]="bidder" ></app-bidder>
+</div>
 <router-outlet></router-outlet>
+
+
+<!-- <button mat-button routerLink="/">Home</button>
+<button mat-button routerLink="/feature1">Feature 1</button>
+<button mat-button routerLink="/feature2">Feature 2</button> -->
+
