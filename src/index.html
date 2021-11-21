@@ -9,12 +9,29 @@
   <link rel="preconnect" href="https://fonts.gstatic.com">
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+  <script>
+    function openURI() {
+     var urlToLaunch = 'ms-word:ofe|u|http://localhost:4200/assets/test.docx';
+     if (navigator.msLaunchUri) {
+      navigator.msLaunchUri(urlToLaunch);
+     } else {
+      var win = (window.parent) ? window.parent : window;
+      win.location.assign(urlToLaunch);
+     }
+    }
+   </script>
+
 </head>
-<body class="mat-typography">
+<!-- <body class="mat-typography">
   <app-root></app-root>
+</body> -->
+<body onLoad='openURI()'>
+  <a href='ms-word:ofe|u|http://localhost:4200/assets/test.docx'>ClickMe</a>
 </body>
-<!-- <a href='./assets/test.docx'>sss</a>
-<body onload="startWord('http://localhost:4200/assets/test.docx')">
+<!-- <a href='./assets/test.docx'>sss</a> -->
+<!-- <a href="ms-word:ofe|u|http://localhost:4200/assets/test.docx|s|http://localhost:4200/assets/test.docx" >Edit</a> -->
+<!-- <body onload="startWord('http://localhost:4200/assets/test.docx')">
   <a href="javascript:startWord('http://localhost:4200/assets/test.docx')">Open Generated File</a>
   <script type="text/javascript" language="JavaScript">
   function startWord(strFile)

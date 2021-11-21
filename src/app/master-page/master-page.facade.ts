@@ -11,7 +11,7 @@ import { Clerk } from './models/clerk.model';
 })
 export class MasterPageFacade {
   public totalBider: number = 2;
-  public saleID: number = 635;
+  public saleID: number = 646;
   public loading$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
   public clerks$: BehaviorSubject<Clerk[]> = new BehaviorSubject<Clerk[]>([]);
   public bidders$: BehaviorSubject<Bidder[]> = new BehaviorSubject<Bidder[]>([]);
@@ -36,7 +36,10 @@ export class MasterPageFacade {
     this.gs.apiRequest<any>(request).subscribe( resp => {
       this.loading$.next(false);
       if ( resp.success === true) {
-        this.currentLot$.next(resp.data.CurrentLot);
+        console.log("Start Auction",resp);
+        setTimeout(() =>{
+          this.openLot(token, resp.data.CurrentLot);
+        }, 1000);
       }
     }, err => {
       console.log(err);
@@ -44,12 +47,13 @@ export class MasterPageFacade {
         setTimeout(() => {
           this.startAuction(token);
         }, 5000);
+      } else if(err.status === 902) {
       }
     });
   }
 
-  placeBid(token: string, bidValue: number,saleID: number, lotID: number, lotNumber: number, paddleNumber: number){
-    const url = 'https://customergateway.bidballer.com/?length=0';
+  placeBid(token: string, bidValue: number, lotID: number, lotNumber: number, paddleNumber: string){
+    const url = 'https://customergateway.bidballer.com/';
     const request = ApiRequest('POST', false).setBaseURL(url).setModuleName('')
     .setController('bid').setAction('');
     request.addParam('length', 0)
@@ -58,28 +62,26 @@ export class MasterPageFacade {
     .addBody('SaleID', this.saleID)
     .addBody('LotNumber', lotNumber)
     .addBody('BidSubmitType', 'LIVE')
-    .addBody('PaddleNumber', paddleNumber)
-    .addBody('Event','CHANGE_LOT');
+    .addBody('PaddleNumber', paddleNumber);
     request.addHeader('Authorization', token);
-    this.gs.apiRequest<any>(request).subscribe( resp => {
-      this.loading$.next(false);
-      if ( resp.success === true) {
-      }
-    });
+    return this.gs.apiRequest<any>(request);
   }
 
-  openLot(token: string, lotID: number){
+  openLot(token: string, currentLot: any){
+    debugger
     const url = 'https://customergateway.bidballer.com/';
     const request = ApiRequest('POST', false).setBaseURL(url).setModuleName('')
     .setController('auctioneer').setAction('event');
     request.addParam('length', 0)
-    .addBody('LotID', lotID)
+    .addBody('LotID', currentLot.LotID)
     .addBody('SaleID', this.saleID)
     .addBody('Event','CHANGE_LOT');
     request.addHeader('Authorization', token);
     this.gs.apiRequest<any>(request).subscribe( resp => {
       this.loading$.next(false);
-      if ( resp.success === true) {
+      debugger
+      if(resp.success === true) {
+        this.currentLot$.next(currentLot);
       }
     });
   }
@@ -94,7 +96,6 @@ export class MasterPageFacade {
     this.gs.apiRequest<any>(request).subscribe( resp => {
       this.loading$.next(false);
       if ( resp.success === true) {
-        debugger
       }
     });
   }

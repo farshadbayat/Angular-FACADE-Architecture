@@ -15,7 +15,9 @@ export class ClerkComponent implements OnInit {
   // wss://customergateway.bidballer.com:6653/?Authorization=eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJDbGVyazEiLCJzYWx0IjoiNjJjYTYwNmMtYjk0Ny00MmJhLTg4MDQtODA5YzIzMDBiZmM0IiwidXNlcm5hbWUiOiJDbGVyazEiLCJ1c2VySWQiOjYsInJvbGUiOjIsInVzZXJLaW5kSWQiOjIsImZ1bGxOYW1lIjoiRGF2aWQgRHVlY2siLCJpYXQiOjE2MzczOTQ2NTAsImV4cCI6MTc2MjU1ODE3MH0.SEKfGXVMZ7ZxTZj4PEJke3HTQ-K7TI29lhIxdRxMIJ_y17Jzv-tatVOD22zYU5VJ6TZwncAA-bvJ5nOJE-sKcA&sale=635
   status: string = 'Prepareing';
 
-  constructor(public logic: MasterPageFacade) { }
+  constructor(public logic: MasterPageFacade) {
+
+  }
 
   ngOnInit(): void {
 
@@ -30,6 +32,10 @@ export class ClerkComponent implements OnInit {
       this.status = 'Auction going to start';
       this.logic.startAuction(this.clerk.Token);
     }, 5 * 1000);
+  }
+
+  startAuction() {
+    this.logic.startAuction(this.clerk.Token);
   }
 
   acked = false;
@@ -49,11 +55,11 @@ export class ClerkComponent implements OnInit {
         return;
       }
       if(resp.success === undefined && resp.success !== false) {
-        this.status = resp.data.SaleStatus;
-        if(resp.data.SaleStatus === 'LIVE') {
+        this.status = resp?.data?.SaleStatus || this.status;
+        if(resp.data.SaleStatus === 'LIVE' || resp.data.SaleStatus === 'WAITING_FOR_AUCTIONEER') {
+          debugger
           this.logic.auctionLive$.next(true);
           this.status = 'Open Lot ' + this.currentLot.LotID;
-          this.logic.openLot(this.clerk.Token, this.currentLot.LotID);
         }
       }
     });
