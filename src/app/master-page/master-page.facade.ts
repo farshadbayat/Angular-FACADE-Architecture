@@ -11,11 +11,12 @@ import { Clerk } from './models/clerk.model';
 })
 export class MasterPageFacade {
   public totalBider: number = 2;
-  public saleID: number = 7788;
+  public saleID: number = 635;
   public loading$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
   public clerks$: BehaviorSubject<Clerk[]> = new BehaviorSubject<Clerk[]>([]);
   public bidders$: BehaviorSubject<Bidder[]> = new BehaviorSubject<Bidder[]>([]);
-
+  public currentLot$: BehaviorSubject<any> = new BehaviorSubject<any>(null);
+  public auctionLive$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
 
   constructor(private gs: GlobalService) { }
 
@@ -24,11 +25,8 @@ export class MasterPageFacade {
     return wsSubject;
   }
 
-  openSale(token: string){
-    // https://customergateway.bidballer.com/auctioneer/event?length=0
-    // Event: "START_AUCTION"
-    // SaleID: 635
-    const url = 'https://customergateway.bidballer.com/test/';
+  startAuction(token: string){
+    const url = 'https://customergateway.bidballer.com/';
     const request = ApiRequest('POST', false).setBaseURL(url).setModuleName('')
     .setController('auctioneer').setAction('event');
     request.addParam('length', 0)
@@ -38,7 +36,50 @@ export class MasterPageFacade {
     this.gs.apiRequest<any>(request).subscribe( resp => {
       this.loading$.next(false);
       if ( resp.success === true) {
-        debugger
+        this.currentLot$.next(resp.data.CurrentLot);
+      }
+    }, err => {
+      console.log(err);
+      if(err.status === 900) {
+        setTimeout(() => {
+          this.startAuction(token);
+        }, 5000);
+      }
+    });
+  }
+
+  placeBid(token: string, bidValue: number,saleID: number, lotID: number, lotNumber: number, paddleNumber: number){
+    const url = 'https://customergateway.bidballer.com/?length=0';
+    const request = ApiRequest('POST', false).setBaseURL(url).setModuleName('')
+    .setController('bid').setAction('');
+    request.addParam('length', 0)
+    .addBody('BidValue', bidValue)
+    .addBody('LotID', lotID)
+    .addBody('SaleID', this.saleID)
+    .addBody('LotNumber', lotNumber)
+    .addBody('BidSubmitType', 'LIVE')
+    .addBody('PaddleNumber', paddleNumber)
+    .addBody('Event','CHANGE_LOT');
+    request.addHeader('Authorization', token);
+    this.gs.apiRequest<any>(request).subscribe( resp => {
+      this.loading$.next(false);
+      if ( resp.success === true) {
+      }
+    });
+  }
+
+  openLot(token: string, lotID: number){
+    const url = 'https://customergateway.bidballer.com/';
+    const request = ApiRequest('POST', false).setBaseURL(url).setModuleName('')
+    .setController('auctioneer').setAction('event');
+    request.addParam('length', 0)
+    .addBody('LotID', lotID)
+    .addBody('SaleID', this.saleID)
+    .addBody('Event','CHANGE_LOT');
+    request.addHeader('Authorization', token);
+    this.gs.apiRequest<any>(request).subscribe( resp => {
+      this.loading$.next(false);
+      if ( resp.success === true) {
       }
     });
   }
@@ -72,5 +113,9 @@ export class MasterPageFacade {
         this.clerks$.next(resp.data.Clerks);
       }
     });
+  }
+
+  randomIntFromInterval(min: number, max: number) {
+    return Math.floor(Math.random() * (max - min + 1) + min)
   }
 }

@@ -9,10 +9,16 @@ import { Bidder } from '../../models/bidder.model';
 })
 export class BidderComponent implements OnInit {
   @Input() bidder!: Bidder;
+  currentLot: any;
+  randomNumber: number = 0;
 
   constructor(public logic: MasterPageFacade) { }
 
   ngOnInit(): void {
+    this.logic.currentLot$.subscribe(resp =>{
+      this.currentLot = resp;
+      this.randomNumber = this.logic.randomIntFromInterval(2, 20) * 100;
+    });
   }
 
   getPaddles() {

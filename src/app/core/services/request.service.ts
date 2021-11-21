@@ -222,23 +222,20 @@ export class RequestBuilder {
   public call(globalService: GlobalService): Observable<Response<any>> {
     const hasParam = this.urlParameters !== undefined && this.urlParameters.count() > 0;
     const urlWithParams = this.getUrl() + ( hasParam ? '?' + this.urlParameters.urlParamaters(this.ignoreNullParam) : '');
-    // const token = globalService.token;
     let headerItems = {'Content-Type':  this.contentType};
     if(globalService.currentUser !== null) {
       headerItems = { ...headerItems, ...{'Authorization': 'Bearer ' + globalService.currentUser.Token} };
     }
     if(this.headerParameters != null) {
-      headerItems = { ...headerItems, ...this.headerParameters };
+      headerItems = { ...headerItems, ...this.headerParameters.toJson(true) };
     }
-    const headers = new HttpHeaders(headerItems);
 
     if (this.loading) {
       globalService.startLoading();
     }
-
     if (this.verb === 'GET') {
       return globalService.http
-        .get<Response<any>>(urlWithParams, { headers: headers })
+        .get<Response<any>>(urlWithParams, { headers: new HttpHeaders(headerItems) })
         .pipe(
           map(this.handlePipeMap),
           catchError(error => {
@@ -247,9 +244,8 @@ export class RequestBuilder {
           tap((resp) => this.messageHandling(this, resp, globalService)));
     } else if (this.verb === 'POST') {
       const data = this.formData || this.bodyParameters.toJson();
-      const postHeader = this.headerParameters?.toJson() || { headers: headers};
       return globalService.http
-        .post<Response<any>>(urlWithParams, data, postHeader)
+        .post<Response<any>>(urlWithParams, data, { headers: new HttpHeaders(headerItems) })
         .pipe(
           map(this.handlePipeMap),
           catchError(error => {
@@ -259,7 +255,7 @@ export class RequestBuilder {
     } else if (this.verb === 'PUT') {
       const data = this.formData || this.bodyParameters.toJson();
       return globalService.http
-        .put<Response<any>>(urlWithParams, data, { headers: headers })
+        .put<Response<any>>(urlWithParams, data, { headers: new HttpHeaders(headerItems) })
         .pipe(
           map(this.handlePipeMap),
           catchError(error => {
@@ -268,7 +264,7 @@ export class RequestBuilder {
           tap((resp) => this.messageHandling(this, resp, globalService)));
     } else if (this.verb === 'DELETE') {
       return globalService.http
-        .delete<Response<any>>(urlWithParams, { headers: headers })
+        .delete<Response<any>>(urlWithParams, { headers: new HttpHeaders(headerItems) })
         .pipe(
           map(this.handlePipeMap),
           catchError(error => {
