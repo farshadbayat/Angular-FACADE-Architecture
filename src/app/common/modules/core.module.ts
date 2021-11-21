@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { HttpClientModule } from '@angular/common/http';
 import { NgModule } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { BrowserModule } from '@angular/platform-browser';
 import { AuthGuard } from '@core/services/auth.guard';
 import { ToastNotificationsModule } from './toast-notification';
@@ -9,6 +10,7 @@ import { ToastNotificationsModule } from './toast-notification';
     imports: [
       BrowserModule,
       CommonModule,
+      FormsModule,
       HttpClientModule,
       ToastNotificationsModule,
     ],
@@ -16,6 +18,7 @@ import { ToastNotificationsModule } from './toast-notification';
       CommonModule,
       ToastNotificationsModule,
       HttpClientModule,
+      FormsModule
     ],
     providers:[AuthGuard]
 })

@@ -222,24 +222,20 @@ export class RequestBuilder {
   public call(globalService: GlobalService): Observable<Response<any>> {
     const hasParam = this.urlParameters !== undefined && this.urlParameters.count() > 0;
     const urlWithParams = this.getUrl() + ( hasParam ? '?' + this.urlParameters.urlParamaters(this.ignoreNullParam) : '');
-    // const token = globalService.token;
-    let headerItems = {'Content-Type':  this.contentType || 'application/json', 'charset' : 'UTF-8'};
-    //let hdrs = new HttpHeaders({'Content-Type':  this.contentType || 'application/json', 'charset' : 'UTF-8', ...this.headerParameters?.toJson()});        // , 'Authorization': 'Bearer kjlkljkl'
+    let headerItems = {'Content-Type':  this.contentType};
     if(globalService.currentUser !== null) {
       headerItems = { ...headerItems, ...{'Authorization': 'Bearer ' + globalService.currentUser.Token} };
     }
     if(this.headerParameters != null) {
-      headerItems = { ...headerItems, ...this.headerParameters };
+      headerItems = { ...headerItems, ...this.headerParameters.toJson(true) };
     }
-    const headers = new HttpHeaders(headerItems);
 
     if (this.loading) {
       globalService.startLoading();
     }
-
     if (this.verb === 'GET') {
       return globalService.http
-        .get<Response<any>>(urlWithParams, { headers: headers })
+        .get<Response<any>>(urlWithParams, { headers: new HttpHeaders(headerItems) })
         .pipe(
           map(this.handlePipeMap),
           catchError(error => {
@@ -248,9 +244,8 @@ export class RequestBuilder {
           tap((resp) => this.messageHandling(this, resp, globalService)));
     } else if (this.verb === 'POST') {
       const data = this.formData || this.bodyParameters.toJson();
-      const postHeader = this.headerParameters?.toJson() || { headers: headers};
       return globalService.http
-        .post<Response<any>>(urlWithParams, data, postHeader)
+        .post<Response<any>>(urlWithParams, data, { headers: new HttpHeaders(headerItems) })
         .pipe(
           map(this.handlePipeMap),
           catchError(error => {
@@ -260,7 +255,7 @@ export class RequestBuilder {
     } else if (this.verb === 'PUT') {
       const data = this.formData || this.bodyParameters.toJson();
       return globalService.http
-        .put<Response<any>>(urlWithParams, data, { headers: headers })
+        .put<Response<any>>(urlWithParams, data, { headers: new HttpHeaders(headerItems) })
         .pipe(
           map(this.handlePipeMap),
           catchError(error => {
@@ -269,7 +264,7 @@ export class RequestBuilder {
           tap((resp) => this.messageHandling(this, resp, globalService)));
     } else if (this.verb === 'DELETE') {
       return globalService.http
-        .delete<Response<any>>(urlWithParams, { headers: headers })
+        .delete<Response<any>>(urlWithParams, { headers: new HttpHeaders(headerItems) })
         .pipe(
           map(this.handlePipeMap),
           catchError(error => {
@@ -286,10 +281,10 @@ export class RequestBuilder {
     if (parent.loading === true) {
       globalService.finishLoading();
     }
-    if (parent.messageShow && resp.Messages) {
-      resp.Messages.forEach((data: string) => {
+    if (parent.messageShow && resp.messages) {
+      resp.messages.forEach((data: string) => {
         globalService.toaster.open({
-          type: resp.Success ? 'success' : 'danger',
+          type: resp.success ? 'success' : 'danger',
           duration: 3000,
           caption: '',
           text: data.trim()
@@ -300,8 +295,8 @@ export class RequestBuilder {
 
   private handlePipeMap(resp: Response<any>): Response<any> {
 
-    if (resp?.Success === false) {
-      throw { message: resp.Messages.join(',').toString(), status: 0};
+    if (resp?.success === false) {
+      throw { message: resp.messages.join(',').toString(), status: 0};
     } else {
       return resp;
     }

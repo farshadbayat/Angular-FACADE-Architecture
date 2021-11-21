@@ -2,9 +2,9 @@ import { Dictionary } from "./dictionary.type";
 
 export class ParamsHandler {
     private params: Dictionary<any> = {};
-    constructor(private init: object | null = null) {
-        if (init !== null) {
-           this.params = Object.assign( {} , init);
+    constructor(params: Dictionary<any> | undefined = undefined) {
+        if (params !== undefined) {
+           this.params = Object.assign( {} , params);
         }
     }
 
@@ -53,16 +53,25 @@ export class ParamsHandler {
         }
     }
 
-    public toJson(): Dictionary<any> {
-        return this.params;
+    /* break reference */
+    public toJson(ignoreNull: boolean = false): Dictionary<any> {
+      const objPropName = Object.getOwnPropertyNames(this.params);
+      let obj: any = {};
+      for (const item of objPropName) {
+          if ((ignoreNull === true && this.params[item] !== '' && this.params[item] !== null && this.params[item] !== undefined) ||
+              (ignoreNull === false)) {
+              obj[item] =  this.params[item];
+          }
+      }
+      return obj;
     }
 
-    public urlParamaters(ignoreNullParam = true): string {
+    public urlParamaters(ignoreNull = true): string {
         const objPropName = Object.getOwnPropertyNames(this.params);
         let objStr = '';
         for (const item of objPropName) {
-            if ((ignoreNullParam === true && this.params[item] !== '' && this.params[item] !== null && this.params[item] !== undefined) ||
-                (ignoreNullParam === false)) {
+            if ((ignoreNull === true && this.params[item] !== '' && this.params[item] !== null && this.params[item] !== undefined) ||
+                (ignoreNull === false)) {
                 objStr += item + '=' + encodeURIComponent(this.params[item]) + '&';
             }
         }
