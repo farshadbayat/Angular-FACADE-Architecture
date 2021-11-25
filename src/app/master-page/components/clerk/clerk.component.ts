@@ -57,7 +57,6 @@ export class ClerkComponent implements OnInit {
       if(resp.success === undefined && resp.success !== false) {
         this.status = resp?.data?.SaleStatus || this.status;
         if(resp.data.SaleStatus === 'LIVE' || resp.data.SaleStatus === 'WAITING_FOR_AUCTIONEER') {
-          debugger
           this.logic.auctionLive$.next(true);
           this.status = 'Open Lot ' + this.currentLot.LotID;
         }

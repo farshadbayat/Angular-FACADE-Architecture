@@ -8,7 +8,12 @@
     <mat-label>Sale ID</mat-label>
     <input matInput [(ngModel)]="logic.saleID">
   </mat-form-field>
+  <mat-form-field class="parameters" appearance="fill">
+    <mat-label>Max Bid Winner</mat-label>
+    <input matInput [(ngModel)]="logic.maxBidWinner">
+  </mat-form-field>
   <button mat-raised-button color="warn" (click)="logic.fetchUserList()" >Init User</button>
+  <button mat-raised-button color="warn" (click)="testToast()" >Test Toast</button>
   <br>
   <mat-progress-bar *ngIf="logic.loading$ | async" mode="indeterminate"></mat-progress-bar>
 </mat-card>

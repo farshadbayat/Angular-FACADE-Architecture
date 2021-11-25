@@ -14,5 +14,17 @@
 }
 
 div{
-  padding: 8px;
+  padding: 4px;
+}
+
+label {
+  margin-right: 5px;
+}
+
+::ng-deep .normal {
+  background-color: aliceblue;
+}
+
+::ng-deep .error {
+  background-color: #ed8aac;
 }

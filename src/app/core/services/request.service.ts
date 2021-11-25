@@ -308,6 +308,7 @@ export class RequestBuilder {
     if (this.loading === true) {
       globalService.finishLoading();
     }
+    return throwError(error);
     const { status } = error ;
     const toaster = globalService.toaster; // ServiceLocator.injector.get(Toaster);
     if (error.error instanceof ErrorEvent) {

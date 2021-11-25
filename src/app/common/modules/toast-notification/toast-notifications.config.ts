@@ -13,4 +13,5 @@ export interface ToastNotificationsConfig {
   direction?: 'rtl' | 'ltr';
   component?: Type<any> | null;
   preventDuplicates?: boolean;
+  maxStackLimit?: number;
 }

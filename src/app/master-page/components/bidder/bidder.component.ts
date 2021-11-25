@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, HostBinding, Input, OnInit } from '@angular/core';
 import { WebSocketSubject } from 'rxjs/webSocket';
 import { MasterPageFacade } from '../../master-page.facade';
 import { Bidder } from '../../models/bidder.model';
@@ -10,11 +10,15 @@ import { Bidder } from '../../models/bidder.model';
 })
 export class BidderComponent implements OnInit {
   @Input() bidder!: Bidder;
+  @HostBinding("class.normal") @Input() normal: boolean = false;
+  @HostBinding("class.error") @Input() error: boolean = false;
   wsSubject!: WebSocketSubject<any>;
   currentLot: any;
   randomNumber: number = 0;
   bidValue = 0;
   status = '';
+  bidEnable = false;
+  currentPaddle = '';
 
   constructor(public logic: MasterPageFacade) { }
 
@@ -22,7 +26,7 @@ export class BidderComponent implements OnInit {
     this.logic.currentLot$.subscribe(resp => {
       this.currentLot = resp;
       if(this.currentLot !== null && this.currentLot !== undefined) {
-        this.randomNumber = this.logic.randomIntFromInterval(2, 20) * 100;
+        this.randomNumber = this.logic.randomIntFromInterval(2, 10) * 100;
         this.initSocket();
       }
     });
@@ -54,22 +58,42 @@ export class BidderComponent implements OnInit {
         setTimeout(() =>{ this.pingSW(); }, 5000);
         return;
       }
-      if(resp.success === undefined && resp.success !== false) {
-        console.log(resp);
-        // this.bidValue = (this.currentLot.MinBid || 0) + this.currentLot.Increment + this.logic.randomIntFromInterval(0, 30);
-        // setInterval(() => {
-        //   const paddleIndex = this.logic.randomIntFromInterval(0, this.bidder.Paddles.length - 1);
-        //   this.logic.placeBid(
-        //     this.bidder.Token,
-        //     this.bidValue,
-        //     this.currentLot.LotID,
-        //     this.currentLot.LotNumber,
-        //     this.bidder.Paddles[paddleIndex]).subscribe( resp => {
-        //     if ( resp.success === true) {
-        //       this.status = resp.data;
-        //     }
-        //   });
-        // }, this.randomNumber + 5000);
+      if(resp?.data?.RealPrice) {
+        console.log(resp.data.CurrentLot.RealPrice);
+
+        this.currentLot.RealPrice = resp.data.CurrentLot.RealPrice;
+        this.currentLot.MinBid = resp.data.CurrentLot.MinBid;
+        this.currentLot.Increment = resp.data.CurrentLot.Increment;
+        this.currentLot.Status = resp.data.CurrentLot.Status;
+      }
+      if(resp?.data?.CurrentLot !== undefined) {
+        this.currentLot.RealPrice = resp.data.CurrentLot.RealPrice;
+        this.currentLot.MinBid = resp.data.CurrentLot.MinBid;
+        this.currentLot.Increment = resp.data.CurrentLot.Increment;
+        this.currentLot.Status = resp.data.CurrentLot.Status;
+        if(this.bidEnable === false) {
+          setInterval(() => {
+            const paddleIndex = this.logic.randomIntFromInterval(0, this.bidder.Paddles.length - 1);
+            this.currentPaddle = this.bidder.Paddles[paddleIndex];
+            this.bidValue = (this.currentLot?.RealPrice || this.currentLot?.MinBid || 0) + this.currentLot.Increment + this.logic.randomIntFromInterval(0, 9)*this.currentLot.Increment ;
+            console.log(this.bidValue);
+            this.logic.placeBid(
+              this.bidder.Token,
+              this.bidValue,
+              this.currentLot.LotID,
+              this.currentLot.LotNumber,
+              this.currentPaddle).subscribe( resp => {
+                this.currentLot.RealPrice = this.bidValue;
+                this.error = false;
+                this.normal = true;
+                this.status = resp.data;
+            }, err =>{
+              this.currentLot.RealPrice = err.error.data.RealPrice;
+              this.normal = false;
+              this.error = true;
+            });
+          }, this.randomNumber+1000);
+        }
       }
     });
   }

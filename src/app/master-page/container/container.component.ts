@@ -14,4 +14,7 @@ export class ContainerComponent implements OnInit {
   ngOnInit(): void {
   }
 
+  testToast() {
+    this.logic.gs.toaster.open({ text: 'Hi', type: 'dark' , maxStackLimit: 3 });
+  }
 }

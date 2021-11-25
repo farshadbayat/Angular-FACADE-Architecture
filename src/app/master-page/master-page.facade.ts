@@ -12,13 +12,15 @@ import { Clerk } from './models/clerk.model';
 export class MasterPageFacade {
   public totalBider: number = 2;
   public saleID: number = 646;
+  public maxBidWinner: number = 2000;
+  public stop: boolean = true;
   public loading$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
   public clerks$: BehaviorSubject<Clerk[]> = new BehaviorSubject<Clerk[]>([]);
   public bidders$: BehaviorSubject<Bidder[]> = new BehaviorSubject<Bidder[]>([]);
   public currentLot$: BehaviorSubject<any> = new BehaviorSubject<any>(null);
   public auctionLive$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
 
-  constructor(private gs: GlobalService) { }
+  constructor(public gs: GlobalService) { }
 
   createSocket(token: string): WebSocketSubject<any> {
     let wsSubject: WebSocketSubject<any> = new WebSocketSubject(`wss://customergateway.bidballer.com:6653/?Authorization=${token}&sale=${this.saleID}`);
@@ -68,7 +70,6 @@ export class MasterPageFacade {
   }
 
   openLot(token: string, currentLot: any){
-    debugger
     const url = 'https://customergateway.bidballer.com/';
     const request = ApiRequest('POST', false).setBaseURL(url).setModuleName('')
     .setController('auctioneer').setAction('event');
@@ -79,7 +80,6 @@ export class MasterPageFacade {
     request.addHeader('Authorization', token);
     this.gs.apiRequest<any>(request).subscribe( resp => {
       this.loading$.next(false);
-      debugger
       if(resp.success === true) {
         this.currentLot$.next(currentLot);
       }

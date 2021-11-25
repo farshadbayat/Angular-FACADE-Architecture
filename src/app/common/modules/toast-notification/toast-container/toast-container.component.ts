@@ -52,6 +52,9 @@ export class ToastContainerComponent {
     if (config.preventDuplicates && this._isDuplicate(collection, config)) {
       return null;
     }
+    if(config.maxStackLimit !== undefined && collection.length >= config.maxStackLimit) {
+      this._delete(collection, collection[0]);
+    }
     const toast = new Toast(config, (t) => this._delete(collection, t));
     collection.push(toast);
     this.changeDetector.detectChanges();
