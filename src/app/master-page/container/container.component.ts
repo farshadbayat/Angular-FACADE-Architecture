@@ -15,7 +15,7 @@ export class ContainerComponent implements OnInit {
 
   pushNotification_onClick() {
     for (let i = 0; i < 30; i++) {
-      this.gs.toaster.open({ text: `Hello${i+1}` , type: 'info'});
+      this.gs.toaster.open({ text: `Hello${i+1}` , type: 'info', maxStackLimit: 5});
     }
   }
 
