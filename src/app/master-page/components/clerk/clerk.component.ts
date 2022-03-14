@@ -16,7 +16,6 @@ export class ClerkComponent implements OnInit {
   status: string = 'Prepareing';
 
   constructor(public logic: MasterPageFacade) {
-
   }
 
   ngOnInit(): void {

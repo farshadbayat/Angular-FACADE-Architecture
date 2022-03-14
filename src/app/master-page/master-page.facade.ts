@@ -19,12 +19,54 @@ export class MasterPageFacade {
   public bidders$: BehaviorSubject<Bidder[]> = new BehaviorSubject<Bidder[]>([]);
   public currentLot$: BehaviorSubject<any> = new BehaviorSubject<any>(null);
   public auctionLive$: BehaviorSubject<boolean> = new BehaviorSubject<boolean>(false);
+  public maxBidSignal$: BehaviorSubject<number> = new BehaviorSubject<number>(0);
+  public stopSignal$: BehaviorSubject<number> = new BehaviorSubject<number>(0);
 
   constructor(public gs: GlobalService) { }
 
   createSocket(token: string): WebSocketSubject<any> {
     let wsSubject: WebSocketSubject<any> = new WebSocketSubject(`wss://customergateway.bidballer.com:6653/?Authorization=${token}&sale=${this.saleID}`);
     return wsSubject;
+  }
+
+  goingNextLot: boolean = false;
+  setChangeBid(bidPrice: number) {
+    if(this.maxBidSignal$.value < bidPrice) {
+      this.maxBidSignal$.next(bidPrice);
+    }
+    if(this.maxBidSignal$.value >= this.maxBidWinner && this.goingNextLot === false) {
+      debugger
+      this.goingNextLot = true;
+      this.stopSignal$.next(this.stopSignal$.value + 1);
+    }
+  }
+
+  openNextLot(token: string) {
+    debugger
+    const url = 'https://customergateway.bidballer.com/';
+    const request = ApiRequest('POST', false).setBaseURL(url).setModuleName('')
+    .setController('bid').setAction('');
+    request.addParam('length', 0)
+    .addBody('Event', 'FINISHED_LOT_TIME')
+    .addBody('LotID', this.currentLot$.value.lotID)
+    .addBody('SaleID', this.saleID)
+    .addHeader('Authorization', token).call(this.gs)
+    .subscribe( resp => {
+      if( resp.success === true) {
+
+        const url = 'https://customergateway.bidballer.com/online/';
+        const request = ApiRequest('POST', false).setBaseURL(url).setModuleName('lot')
+        .setController('info').setAction('nextprev');
+        request.addParam('length', 0)
+        .addBody('LotNumber', this.currentLot$.value.lotID)
+        .addBody('SaleID', this.saleID)
+        .addHeader('Authorization', token).call(this.gs)
+        .subscribe( resp => {
+          this.goingNextLot = false;
+        });
+
+      }
+    });
   }
 
   startAuction(token: string){

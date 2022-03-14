@@ -19,11 +19,13 @@ export class BidderComponent implements OnInit {
   status = '';
   bidEnable = false;
   currentPaddle = '';
+  intervalID?: any = undefined;
 
   constructor(public logic: MasterPageFacade) { }
 
   ngOnInit(): void {
     this.logic.currentLot$.subscribe(resp => {
+      console.log(resp);
       this.currentLot = resp;
       if(this.currentLot !== null && this.currentLot !== undefined) {
         this.randomNumber = this.logic.randomIntFromInterval(2, 10) * 100;
@@ -35,6 +37,16 @@ export class BidderComponent implements OnInit {
       if(resp === true && this.wsSubject === undefined) {
         debugger
         this.initSocket();
+      }
+    });
+
+    this.logic.stopSignal$.subscribe( id => {
+      if(this.intervalID && id > 0) {
+        clearInterval(this.intervalID);
+        debugger
+        if(this.bidValue === this.logic.maxBidSignal$.value) {
+          this.logic.openNextLot(this.bidder.Token);
+        }
       }
     });
   }
@@ -72,7 +84,7 @@ export class BidderComponent implements OnInit {
         this.currentLot.Increment = resp.data.CurrentLot.Increment;
         this.currentLot.Status = resp.data.CurrentLot.Status;
         if(this.bidEnable === false) {
-          setInterval(() => {
+          this.intervalID = setInterval(() => {
             const paddleIndex = this.logic.randomIntFromInterval(0, this.bidder.Paddles.length - 1);
             this.currentPaddle = this.bidder.Paddles[paddleIndex];
             this.bidValue = (this.currentLot?.RealPrice || this.currentLot?.MinBid || 0) + this.currentLot.Increment + this.logic.randomIntFromInterval(0, 9)*this.currentLot.Increment ;
@@ -84,6 +96,7 @@ export class BidderComponent implements OnInit {
               this.currentLot.LotNumber,
               this.currentPaddle).subscribe( resp => {
                 this.currentLot.RealPrice = this.bidValue;
+                this.logic.setChangeBid(this.bidValue);
                 this.error = false;
                 this.normal = true;
                 this.status = resp.data;
