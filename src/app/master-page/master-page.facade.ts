@@ -1,20 +1,15 @@
 import { Injectable } from '@angular/core';
-import { GlobalService } from '@core/services/global.service';
-import { ApiRequest } from '@core/services/request.service';
+import { ClientService } from '@core/services/client.service';
+import { Api } from '@core/classes/request-builder';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class MasterPageFacade {
+  constructor(private gs: ClientService) {}
 
-  constructor(private gs: GlobalService) { }
-
-  startAuction(){
-    const request = ApiRequest('POST', false).setModuleName('')
-    .setController('').setAction('');
-    request.addParam('param1', null)
-    .addBody('param2', null);
-    this.gs.apiRequest<any>(request).subscribe( resp => {
-    });
+  startAuction() {
+    const request = Api('POST', false).module('').controller('').action('');
+    request.addParam('param1', null).addBody('param2', null);
   }
 }
