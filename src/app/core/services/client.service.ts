@@ -21,9 +21,9 @@ export class ClientService {
   }
 
   constructor(
-    public http: HttpClient,
     public toaster: Toaster,
-    public router: Router
+    public http: HttpClient,
+    private readonly router: Router
   ) {
     this.login$ = new BehaviorSubject<UserLogin | null>(null);
     this.loadingCounter$ = new BehaviorSubject<number>(0);
@@ -72,23 +72,25 @@ export class ClientService {
     this.login$.next(this.repository.userLogin);
   }
 
-  public userLogout(): void {
+  public userLogout(redirect: boolean = true): void {
     this.repository.userLogin = null;
     localStorage.clear();
     this.login$.next(this.repository.userLogin);
-    const pattern = new RegExp(
-      '^(http(s)?:\\/\\/)?' + // protocol
-        '((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.)+[a-z]{2,}|' + // domain name
-        '((\\d{1,3}\\.){3}\\d{1,3}))' + // OR ip (v4) address
-        '(\\:\\d+)?(\\/[-a-z\\d%_.~+]*)*' + // port and path
-        '(\\?[;&a-z\\d%_.~+=-]*)?' + // query string
-        '(\\#[-a-z\\d_]*)?$',
-      'i'
-    ); // fragment locator
-    if (!!pattern.test(environment.LOGIN_ROUTE)) {
-      this.router.navigate([environment.LOGIN_ROUTE]);
-    } else {
-      window.location.href = environment.LOGIN_ROUTE;
+    if (redirect === true) {
+      const pattern = new RegExp(
+        '^(http(s)?:\\/\\/)?' + // protocol
+          '((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.)+[a-z]{2,}|' + // domain name
+          '((\\d{1,3}\\.){3}\\d{1,3}))' + // OR ip (v4) address
+          '(\\:\\d+)?(\\/[-a-z\\d%_.~+]*)*' + // port and path
+          '(\\?[;&a-z\\d%_.~+=-]*)?' + // query string
+          '(\\#[-a-z\\d_]*)?$',
+        'i'
+      );
+      if (!!pattern.test(environment.LOGIN_ROUTE)) {
+        this.router.navigate([environment.LOGIN_ROUTE]);
+      } else {
+        window.location.href = environment.LOGIN_ROUTE;
+      }
     }
   }
 
