@@ -1,20 +1,27 @@
 import { Injectable } from '@angular/core';
-import { GlobalService } from '@core/services/global.service';
-import { ApiRequest } from '@core/services/request.service';
+import { ClientService } from '@core/services/client.service';
+import { Api } from '@core/classes/request-builder';
+import { IResponse } from '@core/models/response.model';
+import { Observable } from 'rxjs';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class Feature1Facade {
+  constructor(public gs: ClientService) {}
 
-  constructor(private gs: GlobalService) { }
+  loginRequest(): Observable<IResponse<any>> {
+    return Api()
+      .post()
+      .module('AlphaCore')
+      .controller('user')
+      .action('login')
+      .addBody('username', 'admin')
+      .addBody('password', 'asb85510.+')
+      .call();
+  }
 
-  startAuction(){
-    const request = ApiRequest('POST', false).setModuleName('')
-    .setController('').setAction('');
-    request.addParam('param1', null)
-    .addBody('param2', null);
-    this.gs.apiRequest<any>(request).subscribe( resp => {
-    });
+  cityRequest(): Observable<IResponse<any>> {
+    return this.gs.api().post().controller('address').action('citylist').call();
   }
 }

@@ -1,5 +1,5 @@
-export interface Response<T = any> {
+export interface IResponse<T = any> {
   data?: T;
-  messages: string[];
+  messages?: string[];
   success: boolean;
 }
