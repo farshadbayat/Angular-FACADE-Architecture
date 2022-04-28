@@ -1,9 +1,8 @@
-import { Injectable, ErrorHandler } from '@angular/core';
+import { Injectable } from '@angular/core';
 import {
   ActivatedRouteSnapshot,
   RouterStateSnapshot,
   CanActivate,
-  Router,
 } from '@angular/router';
 import { Observable } from 'rxjs';
 import {
@@ -15,8 +14,6 @@ import {
 } from '@angular/common/http';
 import { map } from 'rxjs/operators';
 import { ClientService } from './client.service';
-import { environment } from 'src/environments/environment';
-
 @Injectable({
   providedIn: 'root',
 })
@@ -34,20 +31,13 @@ export class AuthGuard implements CanActivate, HttpInterceptor {
     );
   }
 
-  constructor(
-    private router: Router,
-    public errorHandler: ErrorHandler,
-    private globalService: ClientService
-  ) {}
+  constructor(private _clientService: ClientService) {}
 
-  canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {
-    if (this.globalService.token) {
+  canActivate(_route: ActivatedRouteSnapshot, state: RouterStateSnapshot) {
+    if (this._clientService.token) {
       return true;
     }
-
-    this.router.navigate([environment.LOGIN_ROUTE], {
-      queryParams: { returnUrl: state.url },
-    });
+    this._clientService.userLogout(true, state.url);
     return false;
   }
 }

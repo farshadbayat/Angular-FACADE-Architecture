@@ -12,6 +12,7 @@ export class ComponentsComponent implements OnInit {
   ngOnInit(): void {}
 
   loginRequest_onClick() {
+    this.facade.gs.userLogout(false);
     this.facade.loginRequest().subscribe((resp) => {
       const userData: UserLogin<any> = {
         Token: resp.data.User.GUID,

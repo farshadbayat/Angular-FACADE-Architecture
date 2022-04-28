@@ -1,13 +1,13 @@
-import { environment } from 'src/environments/environment';
-import { map, catchError, tap } from 'rxjs/operators';
-import { ClientService } from '@core/services/client.service';
-import { Observable, of } from 'rxjs';
-import { IResponse } from '@core/models/response.model';
 import { HttpErrorResponse, HttpHeaders } from '@angular/common/http';
-import { ParamsHandler } from '@core/classes/params-handler';
-import { ServiceLocator } from '@core/services/locator.service';
+import { map, catchError, tap } from 'rxjs/operators';
+import { ClientService } from '../services/client.service';
+import { Observable, of } from 'rxjs';
+import { IResponse } from '../models/response.model';
+import { ParamsHandler } from '../classes/params-handler';
+import { ServiceLocator } from '../services/locator.service';
 import { ErrorHandeling } from './error-handeling';
-import { IErrorHistory } from '@core/models/error-history.model';
+import { IErrorHistory } from '../models/error-history.model';
+import { Environment, IEnvironment } from '../models/enviroment.model';
 
 export function Api(
   verb: HttpVerb = 'GET',
@@ -18,25 +18,17 @@ export function Api(
 
 export declare type HttpVerb = 'GET' | 'POST' | 'DELETE' | 'PUT';
 export declare type CachMode = 'none' | 'memory' | 'localstorage';
-export declare type ModuleName =
-  | 'System'
-  | 'FileStream'
-  | 'BIS'
-  | 'Avl'
-  | string;
+export declare type ModuleName = 'System' | string;
 export declare type ContentType =
   | 'application/json'
   | 'text/plain'
   | 'application/octet-stream'
   | string;
-
-const BEARER = 'Bearer';
-
 export class RequestBuilder {
   private static _globalRequestID = 0;
   private static _errorHistory: IErrorHistory[] = [];
   private _moduleName: ModuleName | string = '';
-  private _apiSignature: string = environment.API_SIGNATURE_NAME;
+  private _apiSignature: string = '';
   private _version: string = 'v1';
   private _controllerName: string = '';
   private _actionName: string = '';
@@ -49,8 +41,11 @@ export class RequestBuilder {
   private _cachMode: CachMode = 'none';
   private _loading: boolean;
   private _messageShow: boolean;
+  private _encodeQueryParam: boolean;
   private _ignoreNullParam: boolean;
   private _contentType: ContentType = 'application/json';
+  private _bearer: string;
+  private readonly _enviroment: IEnvironment;
 
   constructor(private verb: HttpVerb = 'GET', public global: boolean = false) {
     this._requestID = RequestBuilder._globalRequestID++;
@@ -59,6 +54,10 @@ export class RequestBuilder {
     this._messageShow = true;
     this._loading = true;
     this._ignoreNullParam = true;
+    this._enviroment = ServiceLocator.injector.get(Environment);
+    this._apiSignature = this._enviroment?.apiSignatureName || '';
+    this._bearer = this._enviroment?.bearer || '';
+    this._encodeQueryParam = this._enviroment?.encodeQueryParam || true;
   }
 
   get requestID() {
@@ -222,9 +221,9 @@ export class RequestBuilder {
   }
 
   public getUrl(): string {
-    let url = this._baseURL || environment.BASE_ENDPOINT;
+    let url = this._baseURL || this._enviroment.baseEndpoint;
     url = url.substring(url.length - 1) === '/' ? url : url + '/';
-    let urlPath = environment.URL_PATH_SCHEMA;
+    let urlPath = this._enviroment?.urlPathSchema;
     urlPath = urlPath.replace(
       '{MODULE_NAME}/',
       this._moduleName ? `${this._moduleName}/` : ''
@@ -259,13 +258,19 @@ export class RequestBuilder {
     const urlWithParams =
       this.getUrl() +
       (hasParam
-        ? '?' + this._urlParameters.urlParamaters(this._ignoreNullParam)
+        ? '?' +
+          this._urlParameters.urlParamaters(
+            this._ignoreNullParam,
+            this._encodeQueryParam
+          )
         : '');
     let headerItems = { 'Content-Type': this._contentType };
     if (clientService.currentUser !== null) {
       headerItems = {
         ...headerItems,
-        ...{ Authorization: `${BEARER} ${clientService.currentUser.Token}` },
+        ...{
+          Authorization: `${this._bearer} ${clientService.currentUser.Token}`,
+        },
       };
     }
     if (this._headerParameters != null) {
@@ -330,7 +335,7 @@ export class RequestBuilder {
     error: HttpErrorResponse,
     clientService: ClientService
   ) {
-    if (environment.production === true) {
+    if (this._enviroment.debug === true) {
       RequestBuilder._errorHistory.push({ request: this, error: error });
     }
     if (this._loading === true) {

@@ -1,13 +1,12 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable, of } from 'rxjs';
-import { Api, HttpVerb, RequestBuilder } from '../classes/request-builder';
 import { Router } from '@angular/router';
-import { Dictionary } from '@core/classes/dictionary.type';
-import { UserLogin } from '@core/models/user-login.model';
-import { Toaster } from '@core/modules/toast-notification';
-import { environment } from 'src/environments/environment';
-
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { BehaviorSubject, Observable } from 'rxjs';
+import { HttpVerb, RequestBuilder } from '../classes/request-builder';
+import { Dictionary } from '../models/dictionary.model';
+import { UserLogin } from '../models/user-login.model';
+import { Toaster } from '../modules/toast-notification';
+import { Environment } from '../models/enviroment.model';
 @Injectable({
   providedIn: 'root',
 })
@@ -23,7 +22,8 @@ export class ClientService {
   constructor(
     public toaster: Toaster,
     public http: HttpClient,
-    private readonly router: Router
+    private readonly _enviroment: Environment,
+    private readonly _router: Router
   ) {
     this.login$ = new BehaviorSubject<UserLogin | null>(null);
     this.loadingCounter$ = new BehaviorSubject<number>(0);
@@ -72,11 +72,12 @@ export class ClientService {
     this.login$.next(this.repository.userLogin);
   }
 
-  public userLogout(redirect: boolean = true): void {
+  public userLogout(redirect: boolean = true, returnUrl: string = ''): void {
     this.repository.userLogin = null;
     localStorage.clear();
     this.login$.next(this.repository.userLogin);
     if (redirect === true) {
+      const url = this._enviroment?.loginRoute as string;
       const pattern = new RegExp(
         '^(http(s)?:\\/\\/)?' + // protocol
           '((([a-z\\d]([a-z\\d-]*[a-z\\d])*)\\.)+[a-z]{2,}|' + // domain name
@@ -86,10 +87,18 @@ export class ClientService {
           '(\\#[-a-z\\d_]*)?$',
         'i'
       );
-      if (!!pattern.test(environment.LOGIN_ROUTE)) {
-        this.router.navigate([environment.LOGIN_ROUTE]);
+      if (!!pattern.test(url)) {
+        this._router.navigate(
+          [url],
+          returnUrl === ''
+            ? {}
+            : {
+                queryParams: { returnUrl: returnUrl },
+              }
+        );
       } else {
-        window.location.href = environment.LOGIN_ROUTE;
+        window.location.href =
+          url + (returnUrl === '' ? `?returnUrl=${returnUrl}` : '');
       }
     }
   }
