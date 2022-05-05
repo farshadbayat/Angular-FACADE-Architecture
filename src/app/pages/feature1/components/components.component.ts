@@ -11,19 +11,23 @@ export class ComponentsComponent implements OnInit {
 
   ngOnInit(): void {}
 
+  clear_onClick() {
+    this.facade.client.userLogout(false);
+  }
+
   loginRequest_onClick() {
-    this.facade.gs.userLogout(false);
+    this.facade.client.userLogout(false);
     this.facade.loginRequest().subscribe((resp) => {
       const userData: UserLogin<any> = {
         Token: resp.data.User.GUID,
         User: resp.data.User,
       };
-      this.facade.gs.saveUserLogin(userData);
+      this.facade.client.saveUserLogin(userData);
     });
   }
 
   testRequest_onClick() {
-    this.facade.cityRequest().subscribe((resp) => {
+    this.facade.getCityList().subscribe((resp) => {
       console.log(resp.data);
     });
   }

@@ -2,7 +2,6 @@ import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { HttpVerb, RequestBuilder } from '../classes/request-builder';
 import { Dictionary } from '../models/dictionary.model';
 import { UserLogin } from '../models/user-login.model';
 import { Toaster } from '../modules/toast-notification';
@@ -39,10 +38,6 @@ export class ClientService {
     window.requestAnimationFrame(() => this.loadingCounter$.next(0));
   }
 
-  public api(verb: HttpVerb = 'GET'): RequestBuilder {
-    return new RequestBuilder(verb);
-  }
-
   get userLoginAsObservable() {
     return this.login$.asObservable();
   }
@@ -73,6 +68,7 @@ export class ClientService {
   }
 
   public userLogout(redirect: boolean = true, returnUrl: string = ''): void {
+    debugger;
     this.repository.userLogin = null;
     localStorage.clear();
     this.login$.next(this.repository.userLogin);
@@ -88,6 +84,9 @@ export class ClientService {
         'i'
       );
       if (!!pattern.test(url)) {
+        window.location.href =
+          url + (returnUrl === '' ? `?returnUrl=${returnUrl}` : '');
+      } else {
         this._router.navigate(
           [url],
           returnUrl === ''
@@ -96,9 +95,6 @@ export class ClientService {
                 queryParams: { returnUrl: returnUrl },
               }
         );
-      } else {
-        window.location.href =
-          url + (returnUrl === '' ? `?returnUrl=${returnUrl}` : '');
       }
     }
   }

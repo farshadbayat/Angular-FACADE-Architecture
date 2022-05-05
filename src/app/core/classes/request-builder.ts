@@ -1,13 +1,13 @@
 import { HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 import { map, catchError, tap } from 'rxjs/operators';
 import { ClientService } from '../services/client.service';
-import { Observable, of } from 'rxjs';
+import { Observable, of, throwError } from 'rxjs';
 import { IResponse } from '../models/response.model';
 import { ParamsHandler } from '../classes/params-handler';
 import { ServiceLocator } from '../services/locator.service';
-import { ErrorHandeling } from './error-handeling';
 import { IErrorHistory } from '../models/error-history.model';
 import { Environment, IEnvironment } from '../models/enviroment.model';
+import { ToastType } from '@core/modules/toast-notification';
 
 export function Api(
   verb: HttpVerb = 'GET',
@@ -40,24 +40,26 @@ export class RequestBuilder {
   private _baseURL: string | null = null;
   private _cachMode: CachMode = 'none';
   private _loading: boolean;
-  private _messageShow: boolean;
+  private _showMessage: boolean;
   private _encodeQueryParam: boolean;
   private _ignoreNullParam: boolean;
   private _contentType: ContentType = 'application/json';
   private _bearer: string;
   private readonly _enviroment: IEnvironment;
+  private readonly _clientService: ClientService;
 
   constructor(private verb: HttpVerb = 'GET', public global: boolean = false) {
     this._requestID = RequestBuilder._globalRequestID++;
     this._bodyParameters = new ParamsHandler();
     this._urlParameters = new ParamsHandler();
-    this._messageShow = true;
+    this._showMessage = true;
     this._loading = true;
     this._ignoreNullParam = true;
+    this._clientService = ServiceLocator.injector.get(ClientService);
     this._enviroment = ServiceLocator.injector.get(Environment);
-    this._apiSignature = this._enviroment?.apiSignatureName || '';
-    this._bearer = this._enviroment?.bearer || '';
-    this._encodeQueryParam = this._enviroment?.encodeQueryParam || true;
+    this._apiSignature = this._enviroment?.apiSignatureName ?? '';
+    this._bearer = this._enviroment?.bearer ?? '';
+    this._encodeQueryParam = this._enviroment?.encodeQueryParam ?? true;
   }
 
   get requestID() {
@@ -88,35 +90,35 @@ export class RequestBuilder {
     return this;
   }
 
-  public baseURL(baseURL: string | null) {
+  public baseURL(baseURL: string | null): RequestBuilder {
     this._baseURL = baseURL;
     this._version = '';
     this._apiSignature = '';
     return this;
   }
 
-  public module(name: ModuleName) {
+  public module(name: ModuleName): RequestBuilder {
     this._moduleName = name;
     return this;
   }
 
-  public version(name: string) {
+  public version(name: string): RequestBuilder {
     this._version = name;
     return this;
   }
 
-  public contentType(conteType: ModuleName) {
+  public contentType(conteType: ModuleName): RequestBuilder {
     this._contentType = conteType;
     return this;
   }
 
-  public showLoading(show: boolean = true) {
+  public showLoading(show: boolean = true): RequestBuilder {
     this._loading = show;
     return this;
   }
 
-  public showMessage(show: boolean = true) {
-    this._messageShow = show;
+  public showMessage(show: boolean = true): RequestBuilder {
+    this._showMessage = show;
     return this;
   }
 
@@ -221,7 +223,7 @@ export class RequestBuilder {
   }
 
   public getUrl(): string {
-    let url = this._baseURL || this._enviroment.baseEndpoint;
+    let url = this._baseURL ?? this._enviroment.baseEndpoint;
     url = url.substring(url.length - 1) === '/' ? url : url + '/';
     let urlPath = this._enviroment?.urlPathSchema;
     urlPath = urlPath.replace(
@@ -251,8 +253,7 @@ export class RequestBuilder {
     if (ServiceLocator?.injector === null) {
       throw new Error('Service Locator is not initiation yet.');
     }
-    const clientService: ClientService =
-      ServiceLocator.injector.get(ClientService);
+
     const hasParam =
       this._urlParameters !== undefined && this._urlParameters.count() > 0;
     const urlWithParams =
@@ -265,11 +266,11 @@ export class RequestBuilder {
           )
         : '');
     let headerItems = { 'Content-Type': this._contentType };
-    if (clientService.currentUser !== null) {
+    if (this._clientService.currentUser !== null) {
       headerItems = {
         ...headerItems,
         ...{
-          Authorization: `${this._bearer} ${clientService.currentUser.Token}`,
+          Authorization: `${this._bearer} ${this._clientService.currentUser.Token}`,
         },
       };
     }
@@ -278,89 +279,65 @@ export class RequestBuilder {
     }
 
     if (this._loading) {
-      clientService.startLoading();
+      this._clientService.startLoading();
     }
     if (this.verb === 'GET') {
-      return clientService.http
+      return this._clientService.http
         .get<IResponse<any>>(urlWithParams, {
           headers: new HttpHeaders(headerItems),
         })
         .pipe(
           map(this.handlePipeMap),
-          catchError((error) => this.errorHandling(error, clientService)),
-          tap((resp) => this.messageHandling(this, resp, clientService))
+          catchError((error) => this.errorHandling(error)),
+          tap((resp) => this.messageHandling(resp))
         );
     } else if (this.verb === 'POST') {
-      const data = this._formData || this._bodyParameters.toJson();
-      return clientService.http
+      const data = this._formData ?? this._bodyParameters.toJson();
+      return this._clientService.http
         .post<IResponse<any>>(urlWithParams, data, {
           headers: new HttpHeaders(headerItems),
         })
         .pipe(
           map(this.handlePipeMap),
-          catchError((error) => this.errorHandling(error, clientService)),
-          tap((resp) => this.messageHandling(this, resp, clientService))
+          catchError((error) => this.errorHandling(error)),
+          tap((resp) => this.messageHandling(resp))
         );
     } else if (this.verb === 'PUT') {
-      const data = this._formData || this._bodyParameters.toJson();
-      return clientService.http
+      const data = this._formData ?? this._bodyParameters.toJson();
+      return this._clientService.http
         .put<IResponse<any>>(urlWithParams, data, {
           headers: new HttpHeaders(headerItems),
         })
         .pipe(
           map(this.handlePipeMap),
-          catchError((error) => this.errorHandling(error, clientService)),
-          tap((resp: IResponse<any>) =>
-            this.messageHandling(this, resp, clientService)
-          )
+          catchError((error) => this.errorHandling(error)),
+          tap((resp: IResponse<any>) => this.messageHandling(resp))
         );
     } else if (this.verb === 'DELETE') {
-      return clientService.http
+      return this._clientService.http
         .delete<IResponse<any>>(urlWithParams, {
           headers: new HttpHeaders(headerItems),
         })
         .pipe(
           map(this.handlePipeMap),
-          catchError((error) => this.errorHandling(error, clientService)),
-          tap((resp: IResponse<any>) =>
-            this.messageHandling(this, resp, clientService)
-          )
+          catchError((error) => this.errorHandling(error)),
+          tap((resp: IResponse<any>) => this.messageHandling(resp))
         );
     } else {
       return of();
     }
   }
 
-  private errorHandling(
-    error: HttpErrorResponse,
-    clientService: ClientService
-  ) {
-    if (this._enviroment.debug === true) {
-      RequestBuilder._errorHistory.push({ request: this, error: error });
-    }
+  private messageHandling(resp: IResponse<any>) {
     if (this._loading === true) {
-      clientService.finishLoading();
+      this._clientService.finishLoading();
     }
-    return ErrorHandeling(error);
-  }
-
-  private messageHandling(
-    parent: RequestBuilder,
-    resp: IResponse<any>,
-    globalService: ClientService
-  ) {
-    if (parent._loading === true) {
-      globalService.finishLoading();
-    }
-    if (parent._messageShow && resp.messages) {
-      resp.messages.forEach((data: string) => {
-        globalService.toaster.open({
-          type: resp.success ? 'success' : 'danger',
-          duration: 3000,
-          caption: '',
-          text: data.trim(),
-        });
-      });
+    if (resp.messages) {
+      this.openToast(
+        resp.success ? 'success' : 'danger',
+        '',
+        resp.messages.join('\r\n')
+      );
     }
   }
 
@@ -372,20 +349,61 @@ export class RequestBuilder {
     }
   }
 
-  private parseException(error: HttpErrorResponse): string {
-    const errors = [];
-    if (typeof error == 'object' && error?.error?.title !== undefined) {
-      errors.push(error.error.title);
+  private errorHandling(error: HttpErrorResponse) {
+    if (this._enviroment.debug === true) {
+      RequestBuilder._errorHistory.push({ request: this, error: error });
     }
-    if (
-      typeof error == 'object' &&
-      error?.error?.errors &&
-      error?.error?.errors['$.Gender'] !== undefined
-    ) {
-      error.error.errors['$.Gender'].forEach((err: any) => {
-        errors.push(err);
+    if (this._loading === true) {
+      this._clientService.finishLoading();
+    }
+
+    const { status } = error;
+    if (error.error instanceof ErrorEvent) {
+      /* Get client-side error */
+      this.openToast('danger', 'Client Exception', error.error.message);
+    } else {
+      /* Get server-side error */
+      switch (status) {
+        case 404: {
+          this.openToast('danger', 'Not Found', 'Error Code: 404');
+          break;
+        }
+        case 401: {
+          this.openToast('danger', 'Unathorize', 'Error Code: 401');
+          break;
+        }
+        case 403: {
+          this.openToast('danger', 'Access Denide', 'Error Code: 403');
+          this._clientService.userLogout(true);
+          break;
+        }
+        case 500: {
+          this.openToast('danger', 'Server Error', 'Error Code: 500');
+          break;
+        }
+        case 0: {
+          this.openToast('warning', 'Server Error', error.message);
+          break;
+        }
+        default:
+          this.openToast(
+            'danger',
+            `Error Code: ${error.status}`,
+            error.message
+          );
+      }
+    }
+
+    return throwError(error);
+  }
+
+  private openToast(type: ToastType, caption: string, text: string): void {
+    if (this._showMessage !== false) {
+      this._clientService.toaster.open({
+        type: type,
+        caption: caption,
+        text: text,
       });
     }
-    return errors.join(' - ');
   }
 }

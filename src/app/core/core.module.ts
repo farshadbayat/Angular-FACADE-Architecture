@@ -1,11 +1,12 @@
 import { CommonModule } from '@angular/common';
-import { HttpClientModule } from '@angular/common/http';
+import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
 import { ModuleWithProviders, NgModule } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { BrowserModule } from '@angular/platform-browser';
 import { AuthGuard } from '@core/services/auth.guard';
 import { Environment, IEnvironment } from './models/enviroment.model';
 import { ToastNotificationsModule } from './modules/toast-notification';
+import { ResponseErrorHandelingService } from './services/response-error-handeling.service';
 
 @NgModule({
   imports: [
@@ -31,6 +32,11 @@ export class CoreModule {
         {
           provide: Environment,
           useValue: config,
+        },
+        {
+          provide: HTTP_INTERCEPTORS,
+          useClass: ResponseErrorHandelingService,
+          multi: true,
         },
       ],
     };

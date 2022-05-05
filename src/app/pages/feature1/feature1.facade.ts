@@ -8,7 +8,7 @@ import { Observable } from 'rxjs';
   providedIn: 'root',
 })
 export class Feature1Facade {
-  constructor(public gs: ClientService) {}
+  constructor(public client: ClientService) {}
 
   loginRequest(): Observable<IResponse<any>> {
     return Api()
@@ -21,7 +21,12 @@ export class Feature1Facade {
       .call();
   }
 
-  cityRequest(): Observable<IResponse<any>> {
-    return this.gs.api().post().controller('address').action('citylist').call();
+  getCityList(): Observable<IResponse<any>> {
+    return Api()
+      .baseURL('http://107.21.73.109/')
+      .version('v1')
+      .controller('address')
+      .action('citylist')
+      .call();
   }
 }
