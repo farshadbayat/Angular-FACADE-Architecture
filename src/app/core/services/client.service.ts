@@ -68,7 +68,6 @@ export class ClientService {
   }
 
   public userLogout(redirect: boolean = true, returnUrl: string = ''): void {
-    debugger;
     this.repository.userLogin = null;
     localStorage.clear();
     this.login$.next(this.repository.userLogin);

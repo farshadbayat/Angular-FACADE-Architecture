@@ -7,7 +7,7 @@ import { ParamsHandler } from '../classes/params-handler';
 import { ServiceLocator } from '../services/locator.service';
 import { IErrorHistory } from '../models/error-history.model';
 import { Environment, IEnvironment } from '../models/enviroment.model';
-import { ToastType } from '@core/modules/toast-notification';
+import { ToastType } from '../modules/toast-notification';
 
 export function Api(
   verb: HttpVerb = 'GET',
