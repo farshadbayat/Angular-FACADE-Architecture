@@ -1,0 +1,70 @@
+:host {
+  --pulse-color: #d60606;
+}
+
+.pulse {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: tranlate(-50%, -50%);
+
+  &,
+  &::before,
+  &::after {
+    height: 12px;
+    width: 12px;
+    background-color: var(--pulse-color);
+    border-radius: 50%;
+  }
+
+  &::before,
+  &::after {
+    content: "";
+    display: block;
+    position: absolute;
+    left: 0;
+    top: 0;
+  }
+
+  &::after {
+    animation: pulse1 2s ease 0s infinite;
+  }
+
+  &::before {
+    animation: pulse2 2s ease 0s infinite;
+  }
+}
+
+@keyframes pulse1 {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  80% {
+    opacity: 0;
+    transform: scale(12.5);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(12.5);
+  }
+}
+
+@keyframes pulse2 {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  30% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(12.5);
+  }
+}

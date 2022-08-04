@@ -5,7 +5,7 @@ import { ApiRequest } from '@core/services/request.service';
 @Injectable({
   providedIn: 'root'
 })
-export class Feature1Facade {
+export class Feature2Facade {
 
   constructor(private gs: GlobalService) { }
 
